@@ -1,0 +1,17 @@
+Run,BestFitness
+1,338.30
+2,369.67
+3,374.43
+4,440.14
+5,469.16
+6,386.52
+7,520.00
+8,393.04
+9,377.73
+10,521.19
+
+Summary
+AverageFitness,419.02
+BestOverall,338.30
+WorstOverall,521.19
+StdDeviation,61.62

@@ -1,0 +1,14 @@
+Depot: x=74.68 y=77.12
+
+City 1: x=11.45 y=72.03 demand=6
+City 2: x=17.94 y=60.22 demand=6
+City 3: x=53.21 y=50.44 demand=10
+City 4: x=71.10 y=99.85 demand=8
+City 5: x=47.32 y=40.26 demand=3
+City 6: x=71.15 y=35.98 demand=2
+City 7: x=58.46 y=63.19 demand=6
+City 8: x=62.73 y=79.33 demand=10
+City 9: x=51.46 y=45.65 demand=5
+City 10: x=89.26 y=83.41 demand=5
+
+Vehicle Capacity: 50
