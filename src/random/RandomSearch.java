@@ -1,7 +1,7 @@
-package src.random;
+package random;
 
-import src.cvrp.*;
-import src.genetic.*;
+import cvrp.*;
+import genetic.*;
 
 import java.util.*;
 

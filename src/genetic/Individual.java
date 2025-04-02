@@ -1,98 +1,90 @@
-package src.genetic;
+package genetic;
 
-import src.cvrp.*;
+import cvrp.*;
 import java.util.*;
 
 public class Individual {
     public List<Integer> route;  // Order of city visits (city IDs)
     public double fitness;       // Total distance (lower is better)
-    private CVRP problem;        // Reference to the problem instance
+    CVRP problem;        // Reference to the problem instance
 
     // Constructor: generate random route and evaluate fitness
     public Individual(CVRP problem) {
         this.problem = problem;
-        this.route = generateRandomRoute();
-        evaluateFitness();
+        this.route = new ArrayList<>();
+        this.fitness = Double.MAX_VALUE;
     }
 
-    // Deep copy constructor (used in crossover/mutation)
+    // Deep copy constructor – useful for crossover/mutation to clone a parent before modifying.
     public Individual(Individual other) {
         this.problem = other.problem;
         this.route = new ArrayList<>(other.route);
         this.fitness = other.fitness;
     }
 
-    // Generate a random permutation of cities
-    private List<Integer> generateRandomRoute() {
-        List<Integer> cities = new ArrayList<>();
+    // Creates a random permutation of all city IDs (excluding the depot) — used for initial population.
+    public void randomizeRoute() {
+        this.route = new ArrayList<>();
         for (Location city : problem.cities) {
-            cities.add(city.id);
+            this.route.add(city.id);
         }
-        Collections.shuffle(cities);
-        return cities;
+        Collections.shuffle(this.route);
     }
 
     // Evaluate fitness (total distance with capacity and depot returns)
     public void evaluateFitness() {
         double totalDistance = 0.0;
-        double load = 0.0;
-        int depotId = 0;
+        int depotId = problem.depot.id;
+        int depotIndex = problem.getMatrixIndex(depotId);
+        int currentLoad = 0;
+        int previous = depotId;
 
-        int prev = depotId;
         for (int cityId : route) {
             int demand = problem.demands.get(cityId);
+            int prevIndex = problem.getMatrixIndex(previous);
+            int cityIndex = problem.getMatrixIndex(cityId);
 
-            if (load + demand > problem.vehicleCapacity) {
-                // Return to depot
-                totalDistance += problem.distanceMatrix[prev][depotId];
-                prev = depotId;
-                load = 0.0;
+            if (currentLoad + demand > problem.vehicleCapacity) {
+                // Return to depot and start new route
+                totalDistance += problem.distanceMatrix[prevIndex][depotIndex];
+                totalDistance += problem.distanceMatrix[depotIndex][cityIndex];
+                currentLoad = demand;
+            } else {
+                totalDistance += problem.distanceMatrix[prevIndex][cityIndex];
+                currentLoad += demand;
             }
 
-            // Travel to city
-            totalDistance += problem.distanceMatrix[prev][cityId];
-            load += demand;
-            prev = cityId;
+            previous = cityId;
         }
 
-        // Final return to depot
-        totalDistance += problem.distanceMatrix[prev][depotId];
+        // Return to depot from last city
+        int lastIndex = problem.getMatrixIndex(previous);
+        totalDistance += problem.distanceMatrix[lastIndex][depotIndex];
+
         this.fitness = totalDistance;
     }
 
-    // Simple route print
     public void printRoute() {
-        System.out.println("Route: " + route.toString() + " | Fitness: " + fitness);
+        System.out.println("Route: " + route + " | Fitness: " + fitness);
     }
 
-    // Enhanced route print with depot visits shown
     public void printFullRouteWithDepot() {
-        int depotId = 0;
-        double load = 0.0;
-        double totalDistance = 0.0;
-
-        System.out.print("Route with depot: Depot → ");
-        int prev = depotId;
-
+        int depot = problem.depot.id;
+        int currentLoad = 0;
+        int previous = depot;
+        
+        System.out.print("Depot → ");
         for (int cityId : route) {
             int demand = problem.demands.get(cityId);
-
-            if (load + demand > problem.vehicleCapacity) {
-                totalDistance += problem.distanceMatrix[prev][depotId];
+            if (currentLoad + demand > problem.vehicleCapacity) {
                 System.out.print("Depot → ");
-                load = 0.0;
-                prev = depotId;
+                currentLoad = 0;
+                previous = depot;
             }
-
-            totalDistance += problem.distanceMatrix[prev][cityId];
-            load += demand;
             System.out.print(cityId + " → ");
-            prev = cityId;
+            currentLoad += demand;
+            previous = cityId;
         }
-
-        totalDistance += problem.distanceMatrix[prev][depotId];
-        System.out.print("Depot\n");
-
-        System.out.printf("Total Distance (Fitness): %.2f\n", totalDistance);
+        System.out.println("Depot");
     }
 }

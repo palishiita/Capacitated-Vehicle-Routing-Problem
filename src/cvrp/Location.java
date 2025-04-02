@@ -1,7 +1,9 @@
-package src.cvrp;
+package cvrp;
+
 public class Location {
     public int id;
-    public double x, y;
+    public double x;
+    public double y;
 
     public Location(int id, double x, double y) {
         this.id = id;

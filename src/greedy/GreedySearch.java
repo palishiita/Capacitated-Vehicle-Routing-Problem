@@ -1,7 +1,8 @@
-package src.greedy;
 
-import src.cvrp.*;
-import src.genetic.*;
+package greedy;
+
+import cvrp.*;
+import genetic.*;
 import java.util.*;
 
 public class GreedySearch {
@@ -18,7 +19,7 @@ public class GreedySearch {
         }
 
         List<Integer> route = new ArrayList<>();
-        int depotId = 0;
+        int depotId = problem.depot.id;
         int current = depotId;
         double load = 0.0;
 
@@ -29,7 +30,9 @@ public class GreedySearch {
             for (int cityId : unvisited) {
                 int demand = problem.demands.get(cityId);
                 if (load + demand <= problem.vehicleCapacity) {
-                    double distance = problem.distanceMatrix[current][cityId];
+                    int currIndex = problem.getMatrixIndex(current);
+                    int nextIndex = problem.getMatrixIndex(cityId);
+                    double distance = problem.distanceMatrix[currIndex][nextIndex];
                     if (distance < minDistance) {
                         minDistance = distance;
                         nextCity = cityId;
@@ -56,4 +59,3 @@ public class GreedySearch {
         return greedyIndividual;
     }
 }
-

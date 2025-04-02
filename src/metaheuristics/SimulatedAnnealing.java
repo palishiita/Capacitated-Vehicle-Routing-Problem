@@ -1,7 +1,7 @@
-package src.metaheuristics;
+package metaheuristics;
 
-import src.cvrp.*;
-import src.genetic.*;
+import cvrp.*;
+import genetic.*;
 
 import java.util.*;
 
@@ -22,6 +22,9 @@ public class SimulatedAnnealing {
 
     public Individual run() {
         Individual current = new Individual(problem);
+        current.randomizeRoute();              // ✅ Fix: ensure route is initialized
+        current.evaluateFitness();
+
         Individual best = new Individual(current);
         Random rand = new Random();
         double temp = initialTemp;
@@ -48,9 +51,13 @@ public class SimulatedAnnealing {
     private Individual generateNeighbor(Individual ind) {
         Individual neighbor = new Individual(ind);
         Random rand = new Random();
+
+        if (neighbor.route.size() < 2) return neighbor; // 🔒 Prevent crash on short routes
+
         int i = rand.nextInt(neighbor.route.size());
         int j = rand.nextInt(neighbor.route.size());
         Collections.swap(neighbor.route, i, j);
+
         neighbor.evaluateFitness();
         return neighbor;
     }
