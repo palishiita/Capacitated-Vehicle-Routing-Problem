@@ -1,17 +1,19 @@
 package genetic;
 
-import cvrp.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import cvrp.CVRP;
+import utils.Logger;
 
 public class GARunner {
 
     public static GAResult run(CVRP problem, GAConfig config, int runs) {
-        List<Double> fitnesses = new ArrayList<>();
+        double best = Double.MAX_VALUE;
+        double worst = Double.MIN_VALUE;
+        double total = 0;
+        double totalSquared = 0;
+
         long start = System.currentTimeMillis();
 
-        for (int i = 0; i < runs; i++) {
+        for (int run = 0; run < runs; run++) {
             GeneticAlgorithm ga = new GeneticAlgorithm(
                     problem,
                     config.popSize,
@@ -25,21 +27,36 @@ public class GARunner {
                     config.elitismCount
             );
 
-            Individual best = ga.run();
-            fitnesses.add(best.fitness);
+            // Run GA and get result with generation fitness curves
+            GeneticAlgorithm.RunResult result = ga.run();
+            double fitness = result.best.fitness;
+
+            best = Math.min(best, fitness);
+            worst = Math.max(worst, fitness);
+            total += fitness;
+            totalSquared += fitness * fitness;
+
+            // Save generation-by-generation fitness curve
+            String fitnessLogPath = String.format(
+                "C:/Users/ishii/Desktop/Capacitated-Vehicle-Routing-Problem/src/results/ga_fitness_logs/%s_%dgen_%dpop_EC%d_Run%d.csv",
+                config.crossoverType.toString(),
+                config.generations,
+                config.popSize,
+                config.elitismCount,
+                run
+            );
+
+            Logger.writeFitnessLog(fitnessLogPath, result.bests, result.avgs, result.worsts);
         }
 
         long end = System.currentTimeMillis();
 
-        double best = Collections.min(fitnesses);
-        double worst = Collections.max(fitnesses);
-        double avg = fitnesses.stream().mapToDouble(f -> f).average().orElse(0.0);
-        double std = Math.sqrt(fitnesses.stream()
-                .mapToDouble(f -> (f - avg) * (f - avg))
-                .average().orElse(0.0));
+        double average = total / runs;
+        double stdDev = Math.sqrt((totalSquared / runs) - (average * average));
 
+        // ✅ Deterministic evaluation count
         int evaluations = config.popSize * config.generations * runs;
 
-        return new GAResult(best, worst, avg, std, end - start, evaluations);
+        return new GAResult(best, worst, average, stdDev, end - start, evaluations);
     }
 }

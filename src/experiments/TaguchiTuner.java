@@ -5,7 +5,6 @@ import genetic.*;
 import utils.*;
 
 import java.io.File;
-import java.util.concurrent.*;
 
 public class TaguchiTuner {
 
@@ -16,9 +15,9 @@ public class TaguchiTuner {
             "C:/Users/ishii/Desktop/Capacitated-Vehicle-Routing-Problem/src/instances/hard"
         };
 
-        String outputFolder = "C:/Users/ishii/Desktop/Capacitated-Vehicle-Routing-Problem/src/results/taguchi";
+        String outputFolder = "C:/Users/ishii/Desktop/Capacitated-Vehicle-Routing-Problem/src/results/ga_taguchi";
 
-        // Custom orthogonal array: [PopSize, Generations, Px, Pm, TournamentSize]
+        // Taguchi orthogonal array L16: [PopSize, Generations, Px, Pm, TournamentSize]
         int[][] L16 = {
             {0, 0, 0, 0, 0}, {0, 1, 1, 1, 1}, {0, 2, 2, 2, 2}, {0, 3, 3, 3, 3},
             {1, 0, 1, 2, 3}, {1, 1, 2, 3, 0}, {1, 2, 3, 0, 1}, {1, 3, 0, 1, 2},
@@ -32,9 +31,7 @@ public class TaguchiTuner {
         double[] pxRates = {0.7, 0.8, 0.9, 1.0};
         double[] pmRates = {0.01, 0.03, 0.05, 0.1};
         int[] tournamentSizes = {3, 5, 7, 9};
-        int[] elitismCounts = {3};
-
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        int[] elitismCounts = {1, 3, 5};
 
         for (String folderPath : folders) {
             File folder = new File(folderPath);
@@ -53,7 +50,7 @@ public class TaguchiTuner {
                 CVRP problem = new CVRP();
                 problem.loadFromVRPFile(inputPath);
 
-                Logger.writeHeader(outputCSV, "PopSize,Generations,CrossoverRate,MutationRate,TournamentSize,ElitismCount,Best,Worst,Average,StdDev,Time(s),Evaluations");
+                Logger.writeHeader(outputCSV, "Config,Best,Worst,Average,StdDev,Time(s),Evaluations");
 
                 for (int i = 0; i < L16.length; i++) {
                     int[] row = L16[i];
@@ -66,7 +63,7 @@ public class TaguchiTuner {
 
                     for (int elitismCount : elitismCounts) {
                         final int configIndex = i + 1;
-                        final String configName = String.format("[%s] Config %d, ElitismCount: %d", instanceName, configIndex, elitismCount);
+                        final String configName = String.format("[%s] Config %d, EC: %d", instanceName, configIndex, elitismCount);
 
                         GAConfig config = new GAConfig(
                             popSize, gen, px, pm, tournamentSize,
@@ -76,31 +73,22 @@ public class TaguchiTuner {
                             elitismCount
                         );
 
-                        executor.submit(() -> {
-                            try {
-                                System.out.println("⏳ Running " + configName);
-                                GAResult result = GARunner.run(problem, config, 10);
-                                Logger.writeToCSV(outputCSV, config, result);
-                                System.out.println("✅ Done: " + configName);
-                            } catch (Exception e) {
-                                System.err.println("❌ Error in " + configName);
-                                e.printStackTrace();
-                            }
-                        });
+                        try {
+                            System.out.println("Running " + configName);
+                            GAResult result = GARunner.run(problem, config, 10);
+                            Logger.writeToCSV(outputCSV, config, result);
+                            System.out.println("Done: " + configName);
+                        } catch (Exception e) {
+                            System.err.println("Error in " + configName);
+                            e.printStackTrace();
+                        }
                     }
                 }
 
-                System.out.println("🚀 Submitted all configs for: " + instanceName);
+                System.out.println("Completed all configs for: " + instanceName);
             }
         }
 
-        executor.shutdown();
-        try {
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
-            System.err.println("❗Execution interrupted");
-        }
-
-        System.out.println("🎉 All Taguchi experiments completed!");
+        System.out.println("All Taguchi experiments completed!");
     }
 }

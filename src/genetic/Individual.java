@@ -4,25 +4,27 @@ import cvrp.*;
 import java.util.*;
 
 public class Individual {
-    public List<Integer> route;  // Order of city visits (city IDs)
-    public double fitness;       // Total distance (lower is better)
-    CVRP problem;        // Reference to the problem instance
+    public static int evaluationCount = 0; // Static counter for fitness evaluations
 
-    // Constructor: generate random route and evaluate fitness
+    public List<Integer> route;           // Order of city visits (city IDs)
+    public double fitness;                // Total distance (lower is better)
+    CVRP problem;                         // Reference to the problem instance
+
+    // Constructor: generate empty individual linked to a problem
     public Individual(CVRP problem) {
         this.problem = problem;
         this.route = new ArrayList<>();
         this.fitness = Double.MAX_VALUE;
     }
 
-    // Deep copy constructor – useful for crossover/mutation to clone a parent before modifying.
+    // Deep copy constructor – clone an individual
     public Individual(Individual other) {
         this.problem = other.problem;
         this.route = new ArrayList<>(other.route);
         this.fitness = other.fitness;
     }
 
-    // Creates a random permutation of all city IDs (excluding the depot) — used for initial population.
+    // Randomize the route: permutation of city IDs (excluding the depot)
     public void randomizeRoute() {
         this.route = new ArrayList<>();
         for (Location city : problem.cities) {
@@ -31,7 +33,7 @@ public class Individual {
         Collections.shuffle(this.route);
     }
 
-    // Evaluate fitness (total distance with capacity and depot returns)
+    // Evaluate fitness (total distance) with capacity constraints
     public void evaluateFitness() {
         double totalDistance = 0.0;
         int depotId = problem.depot.id;
@@ -62,17 +64,26 @@ public class Individual {
         totalDistance += problem.distanceMatrix[lastIndex][depotIndex];
 
         this.fitness = totalDistance;
+
+        evaluationCount++;
     }
 
+    // Reset the static evaluation counter
+    public static void resetEvaluationCount() {
+        evaluationCount = 0;
+    }
+
+    // Debug: print route and fitness
     public void printRoute() {
         System.out.println("Route: " + route + " | Fitness: " + fitness);
     }
 
+    // Debug: print route with depot visits
     public void printFullRouteWithDepot() {
         int depot = problem.depot.id;
         int currentLoad = 0;
         int previous = depot;
-        
+
         System.out.print("Depot → ");
         for (int cityId : route) {
             int demand = problem.demands.get(cityId);

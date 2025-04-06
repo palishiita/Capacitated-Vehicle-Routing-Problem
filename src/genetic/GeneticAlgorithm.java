@@ -36,14 +36,33 @@ public class GeneticAlgorithm {
         this.population = new ArrayList<>();
     }
 
-    public Individual run() {
+    // ✅ Class to store final result and fitness curve
+    public static class RunResult {
+        public Individual best;
+        public List<Double> bests;
+        public List<Double> avgs;
+        public List<Double> worsts;
+
+        public RunResult(Individual best, List<Double> bests, List<Double> avgs, List<Double> worsts) {
+            this.best = best;
+            this.bests = bests;
+            this.avgs = avgs;
+            this.worsts = worsts;
+        }
+    }
+
+    public RunResult run() {
         initializePopulation();
         Individual globalBest = Collections.min(population, Comparator.comparingDouble(i -> i.fitness));
+
+        List<Double> bestPerGen = new ArrayList<>();
+        List<Double> avgPerGen = new ArrayList<>();
+        List<Double> worstPerGen = new ArrayList<>();
 
         for (int gen = 0; gen < generations; gen++) {
             List<Individual> newPopulation = new ArrayList<>();
 
-            // Always apply elitism
+            // Elitism
             List<Individual> elites = population.stream()
                     .sorted(Comparator.comparingDouble(i -> i.fitness))
                     .limit(elitismCount)
@@ -68,15 +87,10 @@ public class GeneticAlgorithm {
                     Mutation.apply(mutationType, child.route);
                 }
 
-                if (Math.random() < 0.05) {
-                    child = LocalSearch.optimize(child); // 5% chance
-                }                
-                                
                 child.evaluateFitness();
                 newPopulation.add(child);
             }
 
-            // Add elites
             newPopulation.addAll(elites);
             population = newPopulation;
 
@@ -84,9 +98,18 @@ public class GeneticAlgorithm {
             if (currentBest.fitness < globalBest.fitness) {
                 globalBest = new Individual(currentBest);
             }
+
+            // 📊 Collect fitness stats
+            double genBest = population.stream().mapToDouble(i -> i.fitness).min().orElse(0);
+            double genAvg = population.stream().mapToDouble(i -> i.fitness).average().orElse(0);
+            double genWorst = population.stream().mapToDouble(i -> i.fitness).max().orElse(0);
+
+            bestPerGen.add(genBest);
+            avgPerGen.add(genAvg);
+            worstPerGen.add(genWorst);
         }
 
-        return globalBest;
+        return new RunResult(globalBest, bestPerGen, avgPerGen, worstPerGen);
     }
 
     private void initializePopulation() {
